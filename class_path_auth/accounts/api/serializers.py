@@ -6,8 +6,8 @@ from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
 from ..models import (
-    Address, Class, Course, Profile,
-    Program, Student, User, Teacher
+    Address, Class, Course, Institution,
+    Profile, Program, Student, User, Teacher,
 )
 
 
@@ -16,7 +16,7 @@ class AddressSerializer(serializers.ModelSerializer):
         model = Address
         fields = (
             'id', 'state', 'city', 'street', 'neighborhood',
-            'number', 'postal_code', 'complement', 'profile',
+            'number', 'postal_code', 'complement', 'user',
             'created_at', 'modified_at'
         )
 
@@ -25,13 +25,25 @@ class AddressSerializer(serializers.ModelSerializer):
         }
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    addresses = AddressSerializer(many=True, read_only=True)
-
+class StudentSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Profile
+        model = Student
         fields = (
-            'id', 'addresses', 'cpf', 'full_name', 'user',
+            'id', 'addresses', 'cpf', 'full_name',
+            'user', 'description', 'class_id',
+            'created_at', 'modified_at'
+        )
+
+        extra_kwargs = {
+            'user': {'write_only': True},
+        }
+
+
+class TeacherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = (
+            'id', 'cpf', 'full_name', 'user', 'institution',
             'description', 'created_at', 'modified_at'
         )
 
@@ -40,16 +52,36 @@ class ProfileSerializer(serializers.ModelSerializer):
         }
 
 
+class StudentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Student
+        fields = (
+            'id', 'class_id', 'cpf', 'description',
+            'full_name', 'user', 'created_at', 'modified_at'
+        )
+
+        extra_kwargs = {
+            'user': {'write_only': True},
+        }
+
+
 class UserSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True,)
+    profile = serializers.SerializerMethodField(read_only=True)
+    addresses = AddressSerializer(many=True, read_only=True)
     confirm_password = serializers.CharField(write_only=True)
+    token = serializers.CharField(
+        source='auth_token.key',
+        read_only=True
+    )
 
     class Meta:
         model = User
         depth = 2
         fields = (
-            'id', 'confirm_password', 'registration_number',
-            'email', 'profile', 'password', 'is_teacher', 'is_student'
+            'id', 'addresses', 'confirm_password',
+            'registration_number', 'email', 'profile',
+            'password', 'is_teacher', 'token', 'is_student'
         )
         extra_kwargs = {
             'password': {'write_only': True},
@@ -88,24 +120,36 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def create(self, validated_data):
-        password = validated_data.pop('confirm_password')
-        user = super(UserSerializer, self).create(validated_data)
+        validated_data.pop("confirm_password")
+        return User.objects.create_user(**validated_data)
 
-        if 'password' in validated_data:
-            user.set_password(validated_data['password'])
-            user.save()
+    def get_profile(self, obj):
+        profile = None
 
-        token = Token.objects.create(user=user)
+        if obj.is_student and getattr(obj, 'student', None):
+            profile = StudentSerializer(obj.student)
+        elif obj.is_teacher and getattr(obj, 'teacher', None):
+            profile = TeacherSerializer(obj.teacher)
+        return profile.data if profile else {}
 
-        return user
 
-    def to_representation(self, instance):
-        ret = super(UserSerializer, self).to_representation(instance)
+class InstitutionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Institution
+        fields = (
+            'id', 'name', 'description',
+            'created_at', 'modified_at'
+        )
 
-        if self.context['request'].method == "POST":
-            ret['token'] = Token.objects.get(user=instance).key
+    def create(self, validated_data):
+        institution = super(InstitutionSerializer, self).create(validated_data)
 
-        return ret
+        # define the created institution instance as institution of admin
+        admin = self.context['request'].user.admin
+        admin.institution = institution
+        admin.save()
+
+        return institution
 
 
 class ClassSerializer(serializers.ModelSerializer):
@@ -118,10 +162,14 @@ class ClassSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    teacher = serializers.PrimaryKeyRelatedField(
+        queryset=Teacher.objects.all()
+    )
+
     class Meta:
         model = Course
         fields = (
-            'name', 'description', 'class_ref',
+            'name', 'description', 'class_id',
             'teacher', 'program', 'created_at',
             'modified_at'
         )
@@ -134,6 +182,6 @@ class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
         fields = (
-            'name', 'description', 'classes',
+            'name', 'description', 'classes', 'institution',
             'courses', 'created_at', 'modified_at'
         )
