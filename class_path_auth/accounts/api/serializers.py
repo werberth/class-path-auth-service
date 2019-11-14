@@ -1,5 +1,5 @@
 from django.core import exceptions
-from django.contrib.auth import authenticate, password_validation as validators
+from django.contrib.auth import password_validation as validators
 from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
@@ -84,8 +84,14 @@ class UserSerializer(serializers.ModelSerializer):
             'password', 'is_teacher', 'token', 'is_student'
         )
         extra_kwargs = {
-            'password': {'write_only': True},
-            'confirm_password': {'write_only': True},
+            'password': {
+                'write_only': True,
+                'style': {'input_type': 'password'}
+            },
+            'confirm_password': {
+                'write_only': True,
+                'style': {'input_type': 'password'}
+            },
             'is_teacher': {'default': False},
             'is_student': {'default': False}
         }

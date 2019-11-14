@@ -13,7 +13,7 @@ router.register(r'course', viewsets.CourseViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('api-token-login/', auth_views.obtain_auth_token),
+    path('login/', auth_views.obtain_auth_token),
     path('user/', views.create_and_retrieve_user_view),
     path('teacher/', views.create_and_retrieve_teacher_view),
     path('student/', views.create_and_retrieve_student_view),
