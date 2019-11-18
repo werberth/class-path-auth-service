@@ -6,7 +6,7 @@ from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
 from ..models import (
-    Address, Class, Course, Institution,
+    Admin, Address, Class, Course, Institution,
     Profile, Program, Student, User, Teacher,
 )
 
@@ -29,7 +29,7 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = (
-            'id', 'addresses', 'cpf', 'full_name',
+            'id', 'cpf', 'full_name',
             'user', 'description', 'class_id',
             'created_at', 'modified_at'
         )
@@ -52,12 +52,12 @@ class TeacherSerializer(serializers.ModelSerializer):
         }
 
 
-class StudentSerializer(serializers.ModelSerializer):
+class AdminSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Student
+        model = Admin
         fields = (
-            'id', 'class_id', 'cpf', 'description',
+            'id', 'institution', 'cpf', 'description',
             'full_name', 'user', 'created_at', 'modified_at'
         )
 
@@ -136,6 +136,8 @@ class UserSerializer(serializers.ModelSerializer):
             profile = StudentSerializer(obj.student)
         elif obj.is_teacher and getattr(obj, 'teacher', None):
             profile = TeacherSerializer(obj.teacher)
+        elif obj.is_superuser and getattr(obj, 'admin', None):
+            profile = AdminSerializer(obj.admin)
         return profile.data if profile else {}
 
 
@@ -162,7 +164,7 @@ class ClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
         fields = (
-            'name', 'description', 'program',
+            'id', 'name', 'description', 'program',
             'created_at', 'modified_at'
         )
 
@@ -175,7 +177,7 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = (
-            'name', 'description', 'class_id',
+            'id', 'name', 'description', 'class_id',
             'teacher', 'program', 'created_at',
             'modified_at'
         )
@@ -188,6 +190,6 @@ class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
         fields = (
-            'name', 'description', 'classes', 'institution',
-            'courses', 'created_at', 'modified_at'
+            'id', 'name', 'description', 'classes', 'institution',
+            'courses', 'created_at', 'modified_at', 'institution'
         )

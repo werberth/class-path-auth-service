@@ -1,64 +1,70 @@
-from rest_framework import generics, permissions
+from rest_framework import permissions, generics
 
-from . import serializers
+from ..models import Class
 
-from ..models import (
-    Profile, Student, User, Teacher
-)
+from . import serializers, permissions as custom_permissions
 
 
-class CreateRetrieveUserView(generics.CreateAPIView, generics.RetrieveAPIView):
+class MyAccountView(generics.RetrieveAPIView, generics.UpdateAPIView):
     serializer_class = serializers.UserSerializer
-    post_method_permissions = permissions.IsAdminUser,
-    get_method_permissions = permissions.IsAuthenticated,
+    permission_classes = permissions.IsAuthenticated,
 
     def get_object(self):
         return self.request.user
 
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return [permission() for permission in self.get_method_permissions]
-        return [permission() for permission in self.post_method_permissions]
 
-
-class CreateRetrieveTeacherView(generics.CreateAPIView, generics.RetrieveAPIView):
-    serializer_class = serializers.TeacherSerializer
+class MyProfileView(generics.RetrieveAPIView, generics.UpdateAPIView):
     permission_classes = permissions.IsAuthenticated,
-
-    def get_object(self):
-        return self.request.user.teacher
-
-
-class CreateRetrieveStudentsView(generics.CreateAPIView, generics.RetrieveAPIView):
-    serializer_class = serializers.StudentSerializer
-    permission_classes = permissions.IsAuthenticated,
-
-    def get_object(self):
-        return self.request.user.student
-
-
-class CreateRetrieveInstitutionView(generics.CreateAPIView, generics.RetrieveAPIView):
-    serializer_class = serializers.InstitutionSerializer
-    post_method_permissions = permissions.IsAdminUser,
-    get_method_permissions = permissions.IsAuthenticated,
 
     def get_object(self):
         if self.request.user.is_student:
-            related_instance = self.request.user.student.class_id.program
+            return self.request.user.student
         elif self.request.user.is_teacher:
-            related_instance = self.request.user.teacher
-        elif self.request.user.is_superuser:
-            related_instance = self.request.user.admin
-        return related_instance.institution
+            return self.request.user.teacher
+        else:
+            return self.request.user.admin
 
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return [permission() for permission in self.get_method_permissions]
-        return [permission() for permission in self.post_method_permissions]
+    def get_serializer_class(self):
+        if self.request.user.is_student:
+            return serializers.StudentSerializer
+        elif self.request.user.is_teacher:
+            return serializers.TeacherSerializer
+        else:
+            return serializers.AdminSerializer
 
 
-# generics as views
-create_and_retrieve_user_view = CreateRetrieveUserView.as_view()
-create_and_retrieve_teacher_view = CreateRetrieveTeacherView.as_view()
-create_and_retrieve_student_view = CreateRetrieveStudentsView.as_view()
-create_and_retrieve_institution_view = CreateRetrieveInstitutionView.as_view()
+class MyInstitutionView(generics.RetrieveAPIView):
+    serializer_class = serializers.InstitutionSerializer
+    permission_classes = permissions.IsAuthenticated,
+
+    def get_object(self):
+        if self.request.user.is_student:
+            student = self.request.user.student
+            return student.class_id.program.institution
+        elif self.request.user.is_teacher:
+            return self.request.user.teacher.institution
+        else:
+            return self.request.user.admin.institution
+
+
+class MyProgramView(generics.RetrieveAPIView):
+    serializers = serializers.ProgramSerializer
+    permission_classes = custom_permissions.OnlyStudents
+
+    def get_object(self):
+        return self.request.user.student.class_id.program
+
+
+class MyClassView(generics.RetrieveAPIView):
+    serializer_class = serializers.ClassSerializer
+    permission_classes = custom_permissions.OnlyStudents
+
+    def get_object(self):
+        return self.user.student.class_id
+
+
+# Generics as views
+my_class_view = MyClassView.as_view()
+my_user_view = MyAccountView.as_view()
+my_profile_view = MyProfileView.as_view()
+my_institution_view = MyInstitutionView.as_view()
