@@ -49,7 +49,7 @@ class MyInstitutionView(generics.RetrieveAPIView):
 
 class MyProgramView(generics.RetrieveAPIView):
     serializers = serializers.ProgramSerializer
-    permission_classes = custom_permissions.OnlyStudents
+    permission_classes = custom_permissions.OnlyStudents,
 
     def get_object(self):
         return self.request.user.student.class_id.program
@@ -57,10 +57,10 @@ class MyProgramView(generics.RetrieveAPIView):
 
 class MyClassView(generics.RetrieveAPIView):
     serializer_class = serializers.ClassSerializer
-    permission_classes = custom_permissions.OnlyStudents
+    permission_classes = custom_permissions.OnlyStudents,
 
     def get_object(self):
-        return self.user.student.class_id
+        return self.request.user.student.class_id
 
 
 # Generics as views

@@ -185,7 +185,6 @@ Tendo isso como parâmetro, para fazer o logout da aplicação, o client não pr
         {
             "token": "27a762949819620815770cdb696b3118c536fcc3"
         }
-        19405d402e37d8ca3b93d0bfdc7478e99665261a
 
 ## Informações Pessoais [/my-account/]
 ### Obter informações do usuario autenticado.[GET]
@@ -217,7 +216,7 @@ Tendo isso como parâmetro, para fazer o logout da aplicação, o client não pr
         }
 
 
-## Informações da Turma [/my-class/]
+## Aluno -  Informações da Turma [/my-class/]
 Esse endpoint é responsável por retornar as informações da Turma onde o usuario autenticado está matriculado.
 ***Somente usuario do tipo aluno podem acessar.***
 ### Obter informações da Turma do Estudante autenticado.[GET]
@@ -238,10 +237,77 @@ Esse endpoint é responsável por retornar as informações da Turma onde o usua
             "program": 1
         }
 
+## Professor - Informações das Turmas [/my-classes/]
+Esse endpoint é responsável por retornar uma lista com todas as Turmas onde o professor autenticado leciona.
+***Somente usuario do tipo professor podem acessar.***
+### Lista de turmas que o professor autenticado leciona.[GET]
++ Request (application/json)
+    + Headers
+        Authorization Token 19405d402e37d8ca3b93d0bfdc7478e99665261a
+
++ Response 200 (application/json)
+
+    + Body
+
+        [
+            {
+                "created_at": "2019-11-24T20:45:43.785794Z",
+                "description": "Class a of Ciencias da Computação course",
+                "id": 1,
+                "modified_at": "2019-11-24T20:45:43.785826Z",
+                "name": "Class A",
+                "program": 1
+            }
+        ]
+
+## Professor - Lista de Programas [/my-programs/]
+Esse endpoint é responsável por retornar os cursos da Instituição onde o professor autenticado leciona.
+***Somente usuario do tipo professor podem acessar.***
+### Obter lista de programas do professor autenticado.[GET]
++ Request (application/json)
+    + Headers
+        Authorization Token 19405d402e37d8ca3b93d0bfdc7478e99665261a
+
++ Response 200 (application/json)
+
+    + Body
+
+        [
+            {
+                "classes": [
+                    {
+                        "created_at": "2019-11-24T20:45:43.785794Z",
+                        "description": "Class a of Ciencias da Computação course",
+                        "id": 1,
+                        "modified_at": "2019-11-24T20:45:43.785826Z",
+                        "name": "Class A",
+                        "program": 1
+                    }
+                ],
+                "courses": [
+                    {
+                        "class_id": 1,
+                        "created_at": "2019-11-24T20:51:09.178547Z",
+                        "description": null,
+                        "id": 1,
+                        "modified_at": "2019-11-24T20:51:09.178578Z",
+                        "name": "TCC II",
+                        "program": 1,
+                        "teacher": 1
+                    }
+                ],
+                "created_at": "2019-11-24T20:44:33.272621Z",
+                "description": "Curso de Ciencias da Computação",
+                "id": 1,
+                "institution": 1,
+                "modified_at": "2019-11-24T20:44:33.272666Z",
+                "name": "Ciencia da Computação"
+            }
+        ]
 
 ## Informações da Instituição [/my-institution/]
 Esse endpoint é responsável por retornar as informações da Instituição onde o usuario autenticado está matriculado.
-### Obter informações da Instituição do usuário autenticado.[GET]
+### Obter informações da Instituição do usuário autenticado [GET]
 + Request (application/json)
     + Headers
         Authorization Token 19405d402e37d8ca3b93d0bfdc7478e99665261a
@@ -257,3 +323,31 @@ Esse endpoint é responsável por retornar as informações da Instituição ond
             "modified_at": "2019-11-24T20:43:58.355604Z",
             "name": "UESPI"
         }
+
+## Lista de Matérias [/my-courses/]
+Esse endpoint é responsável por retornar todas as matérias de um usuário autenticado.
+
+- Se o usuário, for do tipo Professor, o endpoint retornará todas as matérias que o professor autenticado leciona.
+- Se o usuário, for do tipo Estudante, o endpoint retornará todas as matérias que o aluno está matriculado.
+
+### Obter lista de Materias do usuário autenticado [GET]
++ Request (application/json)
+    + Headers
+        Authorization Token 19405d402e37d8ca3b93d0bfdc7478e99665261a
+
++ Response 200 (application/json)
+
+    + Body
+
+        [
+            {
+                "class_id": 1,
+                "created_at": "2019-11-24T20:51:09.178547Z",
+                "description": null,
+                "id": 1,
+                "modified_at": "2019-11-24T20:51:09.178578Z",
+                "name": "TCC II",
+                "program": 1,
+                "teacher": 1
+            }
+        ]
