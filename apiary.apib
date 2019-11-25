@@ -1,0 +1,187 @@
+FORMAT: 1A
+HOST: http://class-path-auth.herokuapp.com/
+
+# Class Path Auth
+
+Os serviços do sistema Class Path se devidem em 3, sendo um para criação e resposta de conteudos, outro pra trabalhar a geolocalização e distancia entre dois pontos, e um terceiro resposável por retornar as informações de usuários e login.
+
+Eles estão hospeados no heroku com os seguintes dominios:
+
+**Class Path Auth**:
+
+`http://class-path-auth.herokuapp.com/`
+
+**Class Path Location**:
+
+`http://class-path-location.herokuapp.com/`
+
+**Class Path Content**:
+
+`http://class-path-content.herokuapp.com/`
+
+Essa documentação tratasse exclusivamente do serviço de usuarios, `class-path-auth`.
+
+
+## Institutions Collection [/institutions/]
+### Criar Instituição de Ensino [POST]
+
+O primeiro passo para iniciar um workspace é criar uma instituição de ensino que irá abrigar professsores, turmas, cursos e materias.
+Para criar uma instituição por enquanto precisa ser usuario root, mas futuramente vai existir um ou mais usuarios superusuarios resposáveis por cada instituição.
+
++ Request (application/json)
+    + Headers
+
+            Authorization: Token <user token>
+
+    + Body
+
+            {
+            "name": "UESPI",
+            "description": "Faculdade Estadual do Piauí"
+        }
+
++ Response 201 (application/json)
+
+    + Headers
+
+            Authorization: Token <user token>
+
+    + Body
+
+            {
+                "id": 1,
+                "name": "UESPI",
+                "description": "Faculdade Estadual do Piauí",
+                "created_at": "2019-11-25T15:36:07.007243Z",
+                "modified_at": "2019-11-25T15:36:07.007305Z"
+            }
+
+## Program Collection [/programs/]
+### Criar Curso / Serie [POST]
+Após a criação da instituição, é possivel criar e associar um curso a ela, para isso é só basta enviar um post para o path `/programs/` com as informações do curso ou série e o id da instituição.
+
++ Request (application/json)
+    + Headers
+
+            Authorization: Token <user token>
+
+    + Body
+
+        {
+            "name": "Ciencia da Computação",
+            "description": "Curso de Ciencias da Computação",
+            "institution": 1
+        }
+
+
++ Response 200 (application/json)
+
+    + Body
+
+        {
+            "id": 1,
+            "name": "Ciencia da Computação",
+            "description": "Curso de Ciencias da Computação",
+            "institution": 1,
+            "created_at": "2019-11-25T15:45:27.515499Z",
+            "modified_at": "2019-11-25T15:45:27.515534Z"
+        }
+
+## Teacher Collection [/users/]
+Existem 4 tipos de tipos de usuarios, o usuario root que tem total acesso sobre a aplicação, o superusuario que tem acesso administrativo sobre uma instituição, o professor que é capaz de lecionar aulas e compor atividades e o aluno que pode fazer parte de turmas e responder atividades.
+
+Cada usuario só poder ter uma das respectivas permissões como tipo, existe uma validação que retorna uma erro caso alguma requisição desobedeça essa regra.
+
+Os exemplos a seguir tratam-se da criação de dois desses tipos:
+
+### Criar Usuario para o Professor [POST]
++ Request (application/json)
+    + Headers
+
+            Authorization: Token <user token>
+
+    + Body
+
+        {
+            "is_teacher": true,
+            "password": "abc12345",
+            "confirm_password": "abc12345",
+            "registration_number": "123456",
+            "email": "teacher@email.com"
+        }
+
+
++ Response 200 (application/json)
+
+    + Body
+
+        {
+            "id": 1,
+            "is_teacher": true,
+            "registration_number": "12345",
+            "email": "teacher@gmail.com",
+            "token": "c435918c4c4ae4342dc791aa55d2ca4dbdb6ab48",
+        }
+
+
+### Criar Usuario para o Aluno [POST]
++ Request (application/json)
+    + Headers
+
+            Authorization: Token <user token>
+
+    + Body
+
+        {
+            "is_student": true,
+            "password": "abc12345",
+            "confirm_password": "abc12345",
+            "registration_number": "654321",
+            "email": "aluno@email.com"
+        }
+
+
++ Response 200 (application/json)
+
+    + Body
+
+        {
+            "id": 2,
+            "registration_number": "654321",
+            "email": "aluno@email.com",
+            "token": "c435918c4c4ae4342dc791aa55d2ca4dbdb6ab48",
+            "is_student": true
+        }
+
+## Login [/login/]
+
+Por se tratar de microserviços e para facilitar a authenticação pelo app invetor, os tokens de cada usuario são estaticos,
+então para efetuar o login é necessário apenas enviar os dados corretos: username (corresponde ao register_number do usuario) e senha.
+
+Esse endpoint retorna um token que deve ser guardado no storage do aplicativo e enviado no cabeçalho de cada requisição seguindo a regra:
+
+`Authorization: Token <user_token>`
+
+Exemplo:
+
+`Authorization: Token 27a762949819620815770cdb696b3118c536fcc3`
+
+Tendo isso como parametro, para fazer o logout da aplicação, o client não precisa fazer nenhum requisição, apenas excluir o Token do storage.
+### Obter o Token de autenticação (Login) [POST]
++ Request (application/json)
+
+    + Body
+
+        {
+            "username": "123456",
+            "password": "abc12345",
+        }
+
+
++ Response 200 (application/json)
+
+    + Body
+
+        {
+            "token": "27a762949819620815770cdb696b3118c536fcc3"
+        }
