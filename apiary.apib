@@ -3,9 +3,9 @@ HOST: http://class-path-auth.herokuapp.com/
 
 # Class Path Auth
 
-Os serviços do sistema Class Path se devidem em 3, sendo um para criação e resposta de conteudos, outro pra trabalhar a geolocalização e distancia entre dois pontos, e um terceiro resposável por retornar as informações de usuários e login.
+Os serviços do sistema Class Path se dividem em 3, sendo um para criação e resposta de conteúdos, outro pra trabalhar a geolocalização e distância entre dois pontos, e um terceiro responsável por retornar as informações de usuários e login.
 
-Eles estão hospeados no heroku com os seguintes dominios:
+Eles estão hospedados no heroku com os seguintes domínios:
 
 **Class Path Auth**:
 
@@ -19,14 +19,14 @@ Eles estão hospeados no heroku com os seguintes dominios:
 
 `http://class-path-content.herokuapp.com/`
 
-Essa documentação tratasse exclusivamente do serviço de usuarios, `class-path-auth`.
+Essa documentação trata-se exclusivamente do serviço de usuários, `class-path-auth`.
 
 
 ## Institutions Collection [/institutions/]
 ### Criar Instituição de Ensino [POST]
 
-O primeiro passo para iniciar um workspace é criar uma instituição de ensino que irá abrigar professsores, turmas, cursos e materias.
-Para criar uma instituição por enquanto precisa ser usuario root, mas futuramente vai existir um ou mais usuarios superusuarios resposáveis por cada instituição.
+O primeiro passo para iniciar um workspace é criar uma instituição de ensino que irá abrigar professsores, turmas, cursos e matérias.
+Para criar uma instituição, por enquanto, precisa ser usuario root, mas futuramente vai existir um ou mais usuários superusuários responsáveis por cada instituição.
 
 + Request (application/json)
     + Headers
@@ -58,7 +58,7 @@ Para criar uma instituição por enquanto precisa ser usuario root, mas futurame
 
 ## Program Collection [/programs/]
 ### Criar Curso / Serie [POST]
-Após a criação da instituição, é possivel criar e associar um curso a ela, para isso é só basta enviar um post para o path `/programs/` com as informações do curso ou série e o id da instituição.
+Após a criação da instituição, é possivel criar e associar um curso a ela, para isso só basta enviar um post para o path `/programs/` com as informações do curso ou série e o id da instituição.
 
 + Request (application/json)
     + Headers
@@ -88,9 +88,9 @@ Após a criação da instituição, é possivel criar e associar um curso a ela,
         }
 
 ## Teacher Collection [/users/]
-Existem 4 tipos de tipos de usuarios, o usuario root que tem total acesso sobre a aplicação, o superusuario que tem acesso administrativo sobre uma instituição, o professor que é capaz de lecionar aulas e compor atividades e o aluno que pode fazer parte de turmas e responder atividades.
+Existem 4 tipos de usuários, o usuário root que tem total acesso sobre a aplicação, o superusuário que tem acesso administrativo sobre uma instituição, o professor que é capaz de lecionar aulas e compor atividades e o aluno que pode fazer parte de turmas e responder atividades.
 
-Cada usuario só poder ter uma das respectivas permissões como tipo, existe uma validação que retorna uma erro caso alguma requisição desobedeça essa regra.
+Cada usuário só pode ter uma das respectivas permissões como tipo, existe uma validação que retorna uma erro caso alguma requisição desobedeça essa regra.
 
 Os exemplos a seguir tratam-se da criação de dois desses tipos:
 
@@ -155,7 +155,7 @@ Os exemplos a seguir tratam-se da criação de dois desses tipos:
 
 ## Login [/login/]
 
-Por se tratar de microserviços e para facilitar a authenticação pelo app invetor, os tokens de cada usuario são estaticos,
+Por se tratar de microserviços e para facilitar a autenticação pelo app invetor, os tokens de cada usuário são estáticos,
 então para efetuar o login é necessário apenas enviar os dados corretos: username (corresponde ao register_number do usuario) e senha.
 
 Esse endpoint retorna um token que deve ser guardado no storage do aplicativo e enviado no cabeçalho de cada requisição seguindo a regra:
@@ -166,7 +166,7 @@ Exemplo:
 
 `Authorization: Token 27a762949819620815770cdb696b3118c536fcc3`
 
-Tendo isso como parametro, para fazer o logout da aplicação, o client não precisa fazer nenhum requisição, apenas excluir o Token do storage.
+Tendo isso como parâmetro, para fazer o logout da aplicação, o client não precisa fazer nenhum requisição, apenas excluir o Token do storage.
 ### Obter o Token de autenticação (Login) [POST]
 + Request (application/json)
 
