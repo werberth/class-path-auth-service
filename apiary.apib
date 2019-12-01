@@ -185,3 +185,75 @@ Tendo isso como parâmetro, para fazer o logout da aplicação, o client não pr
         {
             "token": "27a762949819620815770cdb696b3118c536fcc3"
         }
+        19405d402e37d8ca3b93d0bfdc7478e99665261a
+
+## Informações Pessoais [/my-account/]
+### Obter informações do usuario autenticado.[GET]
++ Request (application/json)
+    + Headers
+            Authorization Token 27a762949819620815770cdb696b3118c536fcc3
+
++ Response 200 (application/json)
+
+    + Body
+
+        {
+            "addresses": [],
+            "email": "admin@admin.com",
+            "id": 1,
+            "is_student": false,
+            "is_teacher": false,
+            "profile": {
+                "cpf": null,
+                "created_at": "2019-11-24T19:58:30.094078Z",
+                "description": null,
+                "full_name": null,
+                "id": 1,
+                "institution": 2,
+                "modified_at": "2019-11-25T15:36:07.026132Z"
+            },
+            "registration_number": "123456",
+            "token": "27a762949819620815770cdb696b3118c536fcc3"
+        }
+
+
+## Informações da Turma [/my-class/]
+Esse endpoint é responsável por retornar as informações da Turma onde o usuario autenticado está matriculado.
+***Somente usuario do tipo aluno podem acessar.***
+### Obter informações da Turma do Estudante autenticado.[GET]
++ Request (application/json)
+    + Headers
+        Authorization Token 19405d402e37d8ca3b93d0bfdc7478e99665261a
+
++ Response 200 (application/json)
+
+    + Body
+
+        {
+            "created_at": "2019-11-24T20:45:43.785794Z",
+            "description": "Class a of Ciencias da Computação course",
+            "id": 1,
+            "modified_at": "2019-11-24T20:45:43.785826Z",
+            "name": "Class A",
+            "program": 1
+        }
+
+
+## Informações da Instituição [/my-institution/]
+Esse endpoint é responsável por retornar as informações da Instituição onde o usuario autenticado está matriculado.
+### Obter informações da Instituição do usuário autenticado.[GET]
++ Request (application/json)
+    + Headers
+        Authorization Token 19405d402e37d8ca3b93d0bfdc7478e99665261a
+
++ Response 200 (application/json)
+
+    + Body
+
+        {
+            "created_at": "2019-11-24T20:43:58.355574Z",
+            "description": "Faculdade Estadual do Piauí",
+            "id": 1,
+            "modified_at": "2019-11-24T20:43:58.355604Z",
+            "name": "UESPI"
+        }
