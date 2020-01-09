@@ -12,29 +12,13 @@ from ..models import (
 from . import serializers, permissions as custom_permissions
 
 
-class BaseView:
-
-    def get_serializer_context(self):
-        kwargs = super().get_serializer_context()
-        kwargs['request'] = self.request
-        return kwargs
-
-
-class BaseProfileView(BaseView):
+class BaseProfileView(viewsets.ModelViewSet):
     user_actions = ['list', 'retrieve']
 
     def get_serializer_class(self):
         if self.action in self.user_actions:
             return serializers.UserSerializer
         return self.serializer_class
-
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     profile = serializer.save()
-    #     serializer = serializers.UserSerializer(profile.user)
-    #     headers = self.get_success_headers(serializer.data)
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
