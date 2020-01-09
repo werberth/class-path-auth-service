@@ -20,3 +20,10 @@ class OnlyTeachersOrStudents(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return request.user.is_teacher or request.user.is_student
+
+class OnlyAdmin(permissions.BasePermission):
+    message = 'Only Admin are allowed.'
+
+    def has_permission(self, request, view):
+        print(request.user.is_admin)
+        return request.user.is_admin

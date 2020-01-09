@@ -21,17 +21,22 @@ class AddressSerializer(serializers.ModelSerializer):
         )
 
         extra_kwargs = {
-            'profile': {'write_only': True},
+            'user': {'read_only': True},
         }
+
+    def create(self, validated_data):
+        validated_data.update({'user': self.context['request'].user})
+        return super().create(validated_data)
 
 
 class StudentSerializer(serializers.ModelSerializer):
+    student_id = serializers.ReadOnlyField(source='id')
+
     class Meta:
         model = Student
         fields = (
-            'id', 'cpf', 'full_name',
-            'user', 'description', 'class_id',
-            'created_at', 'modified_at'
+            'student_id', 'cpf', 'user', 'description',
+            'class_id', 'created_at', 'modified_at'
         )
 
         extra_kwargs = {
@@ -40,16 +45,23 @@ class StudentSerializer(serializers.ModelSerializer):
 
 
 class TeacherSerializer(serializers.ModelSerializer):
+    teacher_id = serializers.ReadOnlyField(source='id')
+
     class Meta:
         model = Teacher
         fields = (
-            'id', 'cpf', 'full_name', 'user', 'institution',
-            'description', 'created_at', 'modified_at'
+            'teacher_id', 'user', 'description',
+            'created_at', 'modified_at'
         )
 
         extra_kwargs = {
             'user': {'write_only': True},
         }
+
+    def create(self, validated_data):
+        admin = self.context['request'].user.admin
+        validated_data.update({'institution': admin.institution})
+        return super().create(validated_data)
 
 
 class AdminSerializer(serializers.ModelSerializer):
@@ -58,7 +70,7 @@ class AdminSerializer(serializers.ModelSerializer):
         model = Admin
         fields = (
             'id', 'institution', 'cpf', 'description',
-            'full_name', 'user', 'created_at', 'modified_at'
+            'user', 'created_at', 'modified_at'
         )
 
         extra_kwargs = {
@@ -67,6 +79,7 @@ class AdminSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    user_id = serializers.ReadOnlyField(source='id')
     profile = serializers.SerializerMethodField(read_only=True)
     addresses = AddressSerializer(many=True, read_only=True)
     confirm_password = serializers.CharField(write_only=True)
@@ -79,9 +92,9 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         depth = 2
         fields = (
-            'id', 'addresses', 'confirm_password',
-            'registration_number', 'email', 'profile',
-            'password', 'is_teacher', 'token', 'is_student'
+            'user_id', 'email', 'registration_number', 'password',
+            'confirm_password', 'addresses', 'profile',
+            'is_teacher', 'is_student', 'is_admin', 'token'
         )
         extra_kwargs = {
             'password': {
@@ -93,7 +106,8 @@ class UserSerializer(serializers.ModelSerializer):
                 'style': {'input_type': 'password'}
             },
             'is_teacher': {'default': False},
-            'is_student': {'default': False}
+            'is_student': {'default': False},
+            'is_admin': {'default': False}
         }
 
     def validate_password(self, value):
@@ -104,30 +118,30 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(e.messages)
         return value
 
-    def validate(self, data):
-        if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError({
-                "confirm_password": _("Passwords don't match")
-            })
+    # def validate(self, data):
+    #     user = self.instance
 
-        if data['is_teacher'] and data['is_student']:
-            raise serializers.ValidationError({
-                "is_teacher": _(
-                    "An User cannot be a Teacher and a Student at same time."
-                )
-            })
+    #     if data.get('password') != data.get('confirm_password'):
+    #         raise serializers.ValidationError({
+    #             "confirm_password": _("Passwords don't match")
+    #         })
 
-        return super(UserSerializer, self).validate(data)
+    #     if sum([
+    #             data.get('is_admin', user.is_admin if user else None),
+    #             data.get('is_student', user.is_student if user else None),
+    #             data.get('is_teacher', user.is_teacher if user else None)
+    #         ]) > 1:
+    #         raise serializers.ValidationError({
+    #             "is_teacher": _(
+    #                 "An User can't have more then one profile."
+    #             )
+    #         })
 
-    def update(self, validated_data):
-        user = super(UserSerializer, self).update(validated_data)
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
+    #     return super(UserSerializer, self).validate(data)
 
     def create(self, validated_data):
         validated_data.pop("confirm_password")
-        return User.objects.create_user(**validated_data)
+        user = User.objects.create_user(**validated_data)
 
     def get_profile(self, obj):
         profile = None
@@ -136,7 +150,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile = StudentSerializer(obj.student)
         elif obj.is_teacher and getattr(obj, 'teacher', None):
             profile = TeacherSerializer(obj.teacher)
-        elif obj.is_superuser and getattr(obj, 'admin', None):
+        elif obj.is_admin and getattr(obj, 'admin', None):
             profile = AdminSerializer(obj.admin)
         return profile.data if profile else {}
 
@@ -178,8 +192,7 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = (
             'id', 'name', 'description', 'class_id',
-            'teacher', 'program', 'created_at',
-            'modified_at'
+            'teacher', 'created_at', 'modified_at'
         )
 
 
@@ -190,6 +203,11 @@ class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
         fields = (
-            'id', 'name', 'description', 'classes', 'institution',
-            'courses', 'created_at', 'modified_at', 'institution'
+            'id', 'name', 'description', 'classes',
+            'courses', 'created_at', 'modified_at'
         )
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data.update({'institution': user.admin.institution})
+        return super().create(validated_data)

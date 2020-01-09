@@ -17,6 +17,7 @@ class User(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     is_teacher = models.BooleanField(_('is teacher'), default=False)
     is_student = models.BooleanField(_('is student'), default=False)
+    is_admin = models.BooleanField(_('is_admin'), default=False)
 
     objects = CustomUserManager()
 
@@ -40,13 +41,8 @@ class Profile(models.Model):
         null=True,
         blank=True
     )
-    full_name = models.CharField(
-        _('full name'),
-        max_length=250,
-        blank=True,
-        null=True
-    )
     description = models.TextField(_('description'), blank=True, null=True)
+    is_active = models.BooleanField(_('is active'), default=True)
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     modified_at = models.DateTimeField(_('modified at'), auto_now=True)
 
@@ -54,7 +50,7 @@ class Profile(models.Model):
         abstract = True
 
     def __str__(self):
-        return self.full_name or self.user.email
+        return self.user.email
 
 
 class Institution(models.Model):
@@ -74,9 +70,13 @@ class Institution(models.Model):
 class Program(models.Model):
     name = models.CharField(_('name'), max_length=200)
     description = models.TextField(_('description'), blank=True, null=True)
-    institution = models.OneToOneField(Institution, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(_('created_at'), auto_now_add=True)
-    modified_at = models.DateTimeField(_('modified_at'), auto_now=True)
+    institution = models.ForeignKey(
+        Institution,
+        related_name="programs",
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    modified_at = models.DateTimeField(_('modified at'), auto_now=True)
 
     class Meta:
         db_table = 'program'
@@ -117,6 +117,9 @@ class Admin(Profile):
         related_name="admins",
         null=True,
     )
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    modified_at = models.DateTimeField(_('modified at'), auto_now=True)
+
     class Meta:
         db_table = 'admin'
         managed = False
@@ -133,6 +136,8 @@ class Teacher(Profile):
         on_delete=models.CASCADE,
         related_name="teachers"
     )
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    modified_at = models.DateTimeField(_('modified at'), auto_now=True)
 
     class Meta:
         db_table = 'teacher'
@@ -150,6 +155,9 @@ class Student(Profile):
         on_delete=models.CASCADE,
         related_name="students"
     )
+
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    modified_at = models.DateTimeField(_('modified at'), auto_now=True)
 
     class Meta:
         db_table = 'student'
@@ -198,16 +206,36 @@ class Course(models.Model):
         on_delete=models.CASCADE,
         related_name="courses"
     )
-    program = models.ForeignKey(
-        Program,
-        on_delete=models.CASCADE,
-        related_name="courses"
-    )
-    created_at = models.DateTimeField(_('created_at'), auto_now_add=True)
-    modified_at = models.DateTimeField(_('modified_at'), auto_now=True)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    modified_at = models.DateTimeField(_('modified at'), auto_now=True)
 
     class Meta:
         db_table = 'course'
+        managed = False
+
+    def __str__(self):
+        return self.name
+
+
+class Scores(models.Model):
+    first_score = models.FloatField(_('first score'), null=True)
+    second_score = models.FloatField(_('second score'), null=True)
+    third_score = models.FloatField(_('third score'), null=True)
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name="scores"
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="scores"
+    )
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+    modified_at = models.DateTimeField(_('modified at'), auto_now=True)
+
+    class Meta:
+        db_table = 'scores'
         managed = False
 
     def __str__(self):

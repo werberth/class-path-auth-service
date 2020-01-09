@@ -6,23 +6,14 @@ from rest_framework.authtoken import views as auth_views
 from . import viewsets, views
 
 router = routers.SimpleRouter()
-router.register(
-    r'institutions',
-    viewsets.InstitutionViewSet,
-    basename="Institution"
-)
+
 router.register(
     r'users',
     viewsets.UserViewSet,
     basename="User"
 )
 router.register(
-    r'addresses',
-    viewsets.AddressViewSet,
-    basename="Address"
-)
-router.register(
-    r'student',
+    r'students',
     viewsets.StudentViewSet,
     basename="Student"
 )
@@ -41,11 +32,26 @@ router.register(
     viewsets.MyProgramsViewSet,
     basename='Program'
 )
-router.register(r'program', viewsets.ProgramViewSet)
-router.register(r'class', viewsets.ClassViewSet)
-router.register(r'course', viewsets.CourseViewSet)
-router.register(r'teacher', viewsets.TeacherViewSet)
-router.register(r'teacher', viewsets.TeacherViewSet)
+router.register(
+    r'programs',
+    viewsets.ProgramViewSet,
+    basename='Program'
+)
+router.register(
+    r'classes',
+    viewsets.ClassViewSet,
+    basename='Class'
+)
+router.register(
+    r'courses',
+    viewsets.CourseViewSet,
+    basename='Course'
+)
+router.register(
+    r'teachers',
+    viewsets.TeacherViewSet,
+    basename='Teacher'
+)
 
 urlpatterns = [
     path('', include(router.urls)),

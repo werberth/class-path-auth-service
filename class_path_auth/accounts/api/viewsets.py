@@ -1,7 +1,8 @@
 from django.shortcuts import get_object_or_404
 
-from rest_framework import viewsets, permissions, generics
+from rest_framework import viewsets, permissions, generics, status
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from ..models import (
     Address, Class, Course, Profile,
@@ -11,55 +12,108 @@ from ..models import (
 from . import serializers, permissions as custom_permissions
 
 
-class AddressViewSet(viewsets.ModelViewSet):
-    queryset = Address.objects.all()
-    serializer_class = serializers.AddressSerializer
-    permission_classes = permissions.IsAuthenticated,
+class BaseView:
+
+    def get_serializer_context(self):
+        kwargs = super().get_serializer_context()
+        kwargs['request'] = self.request
+        return kwargs
+
+
+class BaseProfileView(BaseView):
+    user_actions = ['list', 'retrieve']
+
+    def get_serializer_class(self):
+        if self.action in self.user_actions:
+            return serializers.UserSerializer
+        return self.serializer_class
+
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     profile = serializer.save()
+    #     serializer = serializers.UserSerializer(profile.user)
+    #     headers = self.get_success_headers(serializer.data)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = serializers.ProgramSerializer
+    permission_classes = permissions.IsAuthenticated, custom_permissions.OnlyAdmin
 
     def get_queryset(self):
-        return self.request.user.addresses.all()
+        institution = self.request.user.admin.institution
+        return institution.programs.all()
 
 
-class ProgramViewSet(viewsets.ModelViewSet):
-    queryset = Program.objects.all()
-    serializer_class = serializers.ProgramSerializer
-    permission_classes = permissions.IsAdminUser,
-
-
-class ClassViewSet(viewsets.ModelViewSet):
-    queryset = Class.objects.all()
+class ClassViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.ClassSerializer
-    permission_classes = permissions.IsAdminUser,
+    permission_classes = permissions.IsAuthenticated, custom_permissions.OnlyAdmin
+
+    def get_queryset(self):
+        institution = self.request.user.admin.institution
+        programs = institution.programs.values_list('id', flat=True)
+        return Class.objects.filter(program__id__in=programs)
 
 
-class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.all()
+class CourseViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.CourseSerializer
-    permission_classes = permissions.IsAdminUser
+    permission_classes = custom_permissions.OnlyAdmin,
+
+    def get_queryset(self):
+        institution = self.request.user.admin.institution
+        teachers = institution.teachers.values_list('id')
+        return Course.objects.filter(teacher__id__in=teachers)
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.UserSerializer
-    permission_classes = permissions.IsAdminUser,
+    permission_classes = permissions.IsAuthenticated, custom_permissions.OnlyAdmin
+
+    def get_queryset(self):
+        institution = self.request.user.admin.institution
+        teacher_users_ids = institution.teachers.values_list('user__id', flat=True)
+
+        programs = institution.programs.values_list('id', flat=True)
+        classes = Class.objects.filter(program__id__in=programs)
+        students = Student.objects.filter(class_id__in=classes)
+        student_users_ids = students.values_list('user__id', flat=True)
+
+        return User.objects.filter(id__in=list(teacher_users_ids) + list(student_users_ids))
 
 
-class TeacherViewSet(viewsets.ModelViewSet):
-    queryset = Teacher.objects.all()
+class TeacherViewSet(BaseProfileView, viewsets.ReadOnlyModelViewSet):
+    lookup_field = 'teacher__id'
     serializer_class = serializers.TeacherSerializer
-    permission_classes = permissions.IsAdminUser,
+    permission_classes = permissions.IsAuthenticated, custom_permissions.OnlyAdmin
+
+    def get_queryset(self):
+        institution = self.request.user.admin.institution
+        teachers = institution.teachers.all()
+
+        if self.action in self.user_actions:
+            users = teachers.values_list('user__id', flat=True)
+            return User.objects.filter(id__in=users)
+
+        return teachers
 
 
-class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.all()
+class StudentViewSet(BaseProfileView, viewsets.ReadOnlyModelViewSet):
+    lookup_field = 'student__id'
     serializer_class = serializers.StudentSerializer
-    permission_classes = permissions.IsAdminUser,
+    permission_classes = permissions.IsAuthenticated, custom_permissions.OnlyAdmin
 
+    def get_queryset(self):
+        institution = self.request.user.admin.institution
+        programs = institution.programs.values_list('id', flat=True)
+        classes = Class.objects.filter(program__id__in=programs)
+        students = Student.objects.filter(class_id__in=classes)
 
-class InstitutionViewSet(viewsets.ModelViewSet):
-    queryset = Institution.objects.all()
-    serializer_class = serializers.InstitutionSerializer
-    permission_classes = permissions.IsAdminUser,
+        if self.action in self.user_actions:
+            users = students.values_list('user__id', flat=True)
+            return User.objects.filter(id__in=users)
+
+        return students
 
 
 class MyClassesViewSet(viewsets.ReadOnlyModelViewSet):
@@ -77,9 +131,9 @@ class MyProgramsViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = custom_permissions.OnlyTeachers,
 
     def get_queryset(self):
-        courses = self.request.user.teacher.courses.all()
-        program_ids = courses.values_list('program', flat=True)
-        return Program.objects.filter(id__in=program_ids)
+        teacher = self.request.user.teacher
+        program_ids = teacher.courses.values_list('class_id__program', flat=True)
+        return Program.objects.filter(institution__in=program_ids)
 
 
 class MyCoursesViewSet(viewsets.ReadOnlyModelViewSet):
