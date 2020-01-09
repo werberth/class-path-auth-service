@@ -175,24 +175,27 @@ class InstitutionSerializer(serializers.ModelSerializer):
 
 
 class ClassSerializer(serializers.ModelSerializer):
+    program_name = serializers.CharField(source='program.name', read_only=True)
+
     class Meta:
         model = Class
         fields = (
             'id', 'name', 'description', 'program',
-            'created_at', 'modified_at'
+            'program_name', 'created_at', 'modified_at'
         )
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    teacher = serializers.PrimaryKeyRelatedField(
-        queryset=Teacher.objects.all()
-    )
+    program = serializers.SerializerMethodField(read_only=True)
+
+    def get_program(self, obj):
+        return obj.class_id.program.name
 
     class Meta:
         model = Course
         fields = (
             'id', 'name', 'description', 'class_id',
-            'teacher', 'created_at', 'modified_at'
+            'teacher', 'program', 'created_at', 'modified_at'
         )
 
 
