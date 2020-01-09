@@ -25,5 +25,4 @@ class OnlyAdmin(permissions.BasePermission):
     message = 'Only Admin are allowed.'
 
     def has_permission(self, request, view):
-        print(request.user.is_admin)
         return request.user.is_admin
