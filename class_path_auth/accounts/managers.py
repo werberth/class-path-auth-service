@@ -60,6 +60,4 @@ class CustomUserManager(UserManager):
         # define user permissions
         self.define_permissions(user)
 
-        if user.is_superuser:
-            Admin.objects.create(user=user)
         return user

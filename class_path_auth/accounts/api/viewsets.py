@@ -42,7 +42,7 @@ class ClassViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CourseViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.CourseSerializer
-    permission_classes = custom_permissions.OnlyAdmin,
+    permission_classes = permissions.IsAuthenticated, custom_permissions.OnlyAdmin,
 
     def get_queryset(self):
         institution = self.request.user.admin.institution
@@ -102,7 +102,7 @@ class StudentViewSet(BaseProfileView, viewsets.ReadOnlyModelViewSet):
 
 class MyClassesViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.ClassSerializer
-    permission_classes = custom_permissions.OnlyTeachers,
+    permission_classes = permissions.IsAuthenticated, custom_permissions.OnlyTeachers
 
     def get_queryset(self):
         courses = self.request.user.teacher.courses.all()
@@ -122,7 +122,7 @@ class MyProgramsViewSet(viewsets.ReadOnlyModelViewSet):
 
 class MyCoursesViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.CourseSerializer
-    permission_classes = custom_permissions.OnlyTeachersOrStudents,
+    permission_classes = permissions.IsAuthenticated, custom_permissions.OnlyTeachersOrStudents
 
     def get_queryset(self):
         user = self.request.user
